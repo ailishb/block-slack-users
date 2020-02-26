@@ -21,8 +21,9 @@ chrome.extension.sendMessage({}, function(response) {
 					senderId = message.getAttribute('data-bot-id')	
 				}
 			} else {
-				senderId = message.getElementsByClassName('c-message__avatar')[0]
-				if (senderId != undefined) {
+				senderId = message.getElementsByClassName('c-message__sender_link')[0];
+
+				if (senderId != undefined && senderId.href != undefined) {
 					senderId = senderId.href.split('/').pop()
 				}
 			}
@@ -31,9 +32,16 @@ chrome.extension.sendMessage({}, function(response) {
 		}
 		var should_hide_message = function(message, is_thread){
 			senderId = get_sender_id(message, is_thread)
-			return Boolean(blockedUsers.indexOf(senderId) > -1)
+			prevMessage = message.previousElementSibling;
+			if (senderId != undefined) {
+				return Boolean(blockedUsers.indexOf(senderId) > -1)
+			} else if (prevMessage != undefined && prevMessage.classList.contains("blocked")) {
+				return true;
+			}
+			return false;
 		}
 		var hide_message = function(message){
+			message.classList.add("blocked");
 			message.style.display = "none";
 		}
 
@@ -43,8 +51,8 @@ chrome.extension.sendMessage({}, function(response) {
 			}
 		}
 
-		message_div = $('#messages_container')  // Parent div that contains main messages
-		thread_div = $('#flex_contents')  // Parent div that contains threads in sidebar
+		message_div = $('.p-message_pane');  // Parent div that contains main messages
+		thread_div = $('.p-flexplane');  // Parent div that contains threads in sidebar
 
 		chrome.storage.sync.get({
 			blockedUsers: "",
